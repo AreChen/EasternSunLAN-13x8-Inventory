@@ -130,6 +130,11 @@ function New-TargetPaths {
         D2RLANExpansionTemplate = Join-Path $mpq "data\D2RLAN\Expanded\Inventory\playerinventoryexpansionlayouthd_expanded.json"
         HdExpansionLayout = Join-Path $mpq "data\global\ui\layouts\playerinventoryexpansionlayouthd.json"
         ControllerExpansionLayout = Join-Path $mpq "data\global\ui\layouts\controller\playerinventoryexpansionlayouthd.json"
+        OriginalBackgroundSprite = Join-Path $mpq "data\hd\global\ui\panel\inventory\background_expanded2.sprite"
+        OriginalBackgroundLowendSprite = Join-Path $mpq "data\hd\global\ui\panel\inventory\background_expanded2.lowend.sprite"
+        GeneratedBackgroundSprite = Join-Path $mpq "data\hd\global\ui\panel\inventory\background_expanded2_13x8.sprite"
+        GeneratedBackgroundLowendSprite = Join-Path $mpq "data\hd\global\ui\panel\inventory\background_expanded2_13x8.lowend.sprite"
+        AutoStockerDll = Join-Path $Root "AutoStocker\ESR-utils.dll"
         UserSettings = Join-Path $mpq "MyUserSettings.json"
     }
 }
@@ -163,11 +168,18 @@ function Backup-Files {
         $Paths.D2RLANExpandedTemplate,
         $Paths.D2RLANExpansionTemplate,
         $Paths.HdExpansionLayout,
-        $Paths.ControllerExpansionLayout
+        $Paths.ControllerExpansionLayout,
+        $Paths.AutoStockerDll
     )
 
     if ($IncludeSettings -and (Test-Path $Paths.UserSettings)) {
         $files += $Paths.UserSettings
+    }
+
+    foreach ($generated in @($Paths.GeneratedBackgroundSprite, $Paths.GeneratedBackgroundLowendSprite)) {
+        if (Test-Path $generated) {
+            $files += $generated
+        }
     }
 
     foreach ($file in $files) {
@@ -196,6 +208,68 @@ function Copy-OverlayAssets {
 
     Copy-Item -Path (Join-Path $overlayMpq "data\hd") -Destination (Join-Path $Paths.MpqRoot "data") -Recurse -Force
     Write-Step "Copied 13x8 HD inventory art overlay"
+}
+
+function ConvertTo-DoubleBytes {
+    param([double[]]$Values)
+
+    $bytes = New-Object System.Collections.Generic.List[byte]
+    foreach ($value in $Values) {
+        $bytes.AddRange([BitConverter]::GetBytes($value))
+    }
+
+    return $bytes.ToArray()
+}
+
+function Find-Bytes {
+    param(
+        [byte[]]$Bytes,
+        [byte[]]$Pattern
+    )
+
+    for ($i = 0; $i -le $Bytes.Length - $Pattern.Length; $i++) {
+        $matched = $true
+        for ($j = 0; $j -lt $Pattern.Length; $j++) {
+            if ($Bytes[$i + $j] -ne $Pattern[$j]) {
+                $matched = $false
+                break
+            }
+        }
+
+        if ($matched) {
+            return $i
+        }
+    }
+
+    return -1
+}
+
+function Patch-AutoStockerDll {
+    param([string]$File)
+
+    if (-not (Test-Path $File)) {
+        Write-Step "AutoStocker DLL was not found; skipping DLL coordinate patch"
+        return
+    }
+
+    $bytes = [System.IO.File]::ReadAllBytes($File)
+    $original = ConvertTo-DoubleBytes @([double]819, [double]856, [double]1140, [double]1176, [double]1470)
+    $patched = ConvertTo-DoubleBytes @([double]819, [double]856, [double]1434, [double]1176, [double]1470)
+
+    $offset = Find-Bytes $bytes $original
+    if ($offset -lt 0) {
+        if ((Find-Bytes $bytes $patched) -ge 0) {
+            Write-Step "AutoStocker DLL coordinate patch already applied"
+            return
+        }
+
+        throw "Could not find the expected AutoStocker coordinate table in $File"
+    }
+
+    $patchOffset = $offset + 16
+    [Array]::Copy([BitConverter]::GetBytes([double]1434), 0, $bytes, $patchOffset, 8)
+    [System.IO.File]::WriteAllBytes($File, $bytes)
+    Write-Step "Patched AutoStocker DLL inventory X offset from 1140 to 1434"
 }
 
 function Patch-InventoryTxt {
@@ -257,10 +331,10 @@ function Patch-ProfileHd {
 
     $text = Read-Text $File
 
-    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1140, "y": -856, "width": 1562, "height": 1707 }' '    "RightPanelRectI": { "x": -1140, "y": -856, "width": 1562, "height": 1707 },' $File
-    $text = Set-ObjectLine $text "PanelClickCatcherRect_ExpandedInventory" '{ "x": 0, "y": 0, "width": 1562, "height": 1737 }' '    "PanelClickCatcherRect": { "x": 0, "y": 0, "width": 1172, "height": 1427 },' $File
+    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1434, "y": -856, "width": 1856, "height": 1707 }' '    "RightPanelRectI": { "x": -1140, "y": -856, "width": 1562, "height": 1707 },' $File
+    $text = Set-ObjectLine $text "PanelClickCatcherRect_ExpandedInventory" '{ "x": 0, "y": 0, "width": 1456, "height": 1737 }' '    "PanelClickCatcherRect": { "x": 0, "y": 0, "width": 1172, "height": 1427 },' $File
     $text = Set-ObjectLine $text "RightHingeRect" '{ "x": 1076, "y": 630 }' '    "RightSideHoverOffset": { "x": -1086, "y": 0 },' $File
-    $text = Set-ObjectLine $text "RightHingeRect_ExpandedInventory" '{ "x": 1076, "y": 630 }' '    "RightHingeRect": { "x": 1076, "y": 630 },' $File
+    $text = Set-ObjectLine $text "RightHingeRect_ExpandedInventory" '{ "x": 1370, "y": 630 }' '    "RightHingeRect": { "x": 1076, "y": 630 },' $File
 
     Write-Text $File $text
 }
@@ -269,7 +343,7 @@ function Patch-ProfileLv {
     param([string]$File)
 
     $text = Read-Text $File
-    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1346, "y": 0, "width": 1162, "height": 1737, "scale": 1.16 }' '    "RightPanelRect":  { "x": -1346, "y": -856, "width": 1162, "height": 1507, "scale": 1.16 },' $File
+    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1689, "y": 0, "width": 1456, "height": 1737, "scale": 1.16 }' '    "RightPanelRect":  { "x": -1346, "y": -856, "width": 1162, "height": 1507, "scale": 1.16 },' $File
     Write-Text $File $text
 }
 
@@ -280,26 +354,26 @@ function Patch-InventoryOriginalHdArt {
     $text = Replace-AnyIfNeeded $text @('"rect": "$RightPanelRectI"', '"rect": "$RightPanelRect_ExpandedInventory"') '"rect": "$RightPanelRect_ExpandedInventory"' $File
     $text = Replace-AnyIfNeeded $text @('"rect": "$RightHingeRect"', '"rect": "$RightHingeRect_ExpandedInventory"') '"rect": "$RightHingeRect_ExpandedInventory"' $File
     $text = Replace-AnyIfNeeded $text @('"rect": { "x": 0, "y": 0, "width": 1162, "height": 1737 }', '"rect": "$PanelClickCatcherRect_ExpandedInventory"', '"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }') '"rect": "$PanelClickCatcherRect_ExpandedInventory"' $File
-    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded2"' $File
-    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 1080, "y": 1 }', '"rect": { "x": 1300, "y": 1 }') '"rect": { "x": 1080, "y": 1 }' $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"', '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 1080, "y": 1 }', '"rect": { "x": 1300, "y": 1 }', '"rect": { "x": 1374, "y": 1 }') '"rect": { "x": 1374, "y": 1 }' $File
     $text = Replace-AnyIfNeeded $text @('"rect": { "x": 93, "y": 819 }', '"rect": { "x": 56, "y": 590 }', '"rect": { "x": 56, "y": 640 }') '"rect": { "x": 93, "y": 819 }' $File
     $text = Replace-AnyIfNeeded $text @('"cellCount": { "x": 10, "y": 8 }', '"cellCount": { "x": 13, "y": 8 }') '"cellCount": { "x": 13, "y": 8 }' $File
 
     $rects = @(
-        @('"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 117, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 169, "width": 196, "height": 196 }'),
-        @('"rect": { "x": 718, "y": 273, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 91, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 143, "width": 98, "height": 98 }'),
-        @('"rect": { "x": 482, "y": 348, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 119, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 171, "width": 196, "height": 294 }'),
+        @('"rect": { "x": 630, "y": 105, "width": 196, "height": 196 }', '"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 117, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 169, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 1012, "y": 273, "width": 98, "height": 98 }', '"rect": { "x": 718, "y": 273, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 91, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 143, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 630, "y": 348, "width": 196, "height": 294 }', '"rect": { "x": 482, "y": 348, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 119, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 171, "width": 196, "height": 294 }'),
         @('"rect": { "x": 109, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 95, "y": 164, "width": 196, "height": 392 }', '"rect": { "x": 94, "y": 216, "width": 196, "height": 392 }'),
-        @('"rect": { "x": 861, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 1088, "y": 164, "width": 196, "height": 392 }', '"rect": { "x": 1087, "y": 216, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 1155, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 861, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 1088, "y": 164, "width": 196, "height": 392 }', '"rect": { "x": 1087, "y": 216, "width": 196, "height": 392 }'),
         @('"rect": { "x": 344, "y": 690, "width": 98, "height": 98 }', '"rect": { "x": 818, "y": 224, "width": 98, "height": 98 }', '"rect": { "x": 818, "y": 276, "width": 98, "height": 98 }'),
-        @('"rect": { "x": 718, "y": 689, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 223, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 276, "width": 98, "height": 98 }'),
-        @('"rect": { "x": 483, "y": 689, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 455, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 507, "width": 196, "height": 98 }'),
-        @('"rect": { "x": 860, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 834, "y": 357, "width": 196, "height": 196 }', '"rect": { "x": 833, "y": 413, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 1012, "y": 689, "width": 98, "height": 98 }', '"rect": { "x": 718, "y": 689, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 223, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 276, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 630, "y": 689, "width": 196, "height": 98 }', '"rect": { "x": 483, "y": 689, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 455, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 507, "width": 196, "height": 98 }'),
+        @('"rect": { "x": 1154, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 860, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 834, "y": 357, "width": 196, "height": 196 }', '"rect": { "x": 833, "y": 413, "width": 196, "height": 196 }'),
         @('"rect": { "x": 107, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 355, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 411, "width": 196, "height": 196 }')
     )
 
     foreach ($pair in $rects) {
-        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[0] $File
+        $text = Replace-AnyIfNeeded $text $pair $pair[0] $File
     }
 
     Write-Text $File $text
@@ -309,17 +383,17 @@ function Patch-InventoryExpansionHdArt {
     param([string]$File)
 
     $text = Read-Text $File
-    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded2"' $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"', '"filename": "PANEL\\Inventory\\Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"' $File
 
     $rects = @(
         @('"rect": { "x": 99, "y": 100 }', '"rect": { "x": 85, "y": 112 }', '"rect": { "x": 85, "y": 191 }'),
-        @('"rect": { "x": 850, "y": 100 }', '"rect": { "x": 1077, "y": 112 }', '"rect": { "x": 1077, "y": 191 }'),
+        @('"rect": { "x": 1144, "y": 100 }', '"rect": { "x": 850, "y": 100 }', '"rect": { "x": 1077, "y": 112 }', '"rect": { "x": 1077, "y": 191 }'),
         @('"rect": { "x": 99, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 85, "y": 192, "width": 107, "height": 48 }'),
         @('"rect": { "x": 205, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 191, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 191, "y": 192, "width": 107, "height": 48 }'),
-        @('"rect": { "x": 850, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 192, "width": 107, "height": 48 }'),
-        @('"rect": { "x": 956, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 192, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 1144, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 850, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 192, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 1250, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 956, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 192, "width": 107, "height": 48 }'),
         @('"rect": { "x": 99, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 215, "height": 48 }', '"rect": { "x": 85, "y": 191, "width": 215, "height": 48 }'),
-        @('"rect": { "x": 850, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 191, "width": 215, "height": 48 }')
+        @('"rect": { "x": 1144, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 850, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 191, "width": 215, "height": 48 }')
     )
 
     foreach ($pair in $rects) {
@@ -441,6 +515,18 @@ function Patch-UserSettings {
     }
 }
 
+function Validate-AutoStockerDll {
+    param([string]$File)
+
+    if (-not (Test-Path $File)) {
+        return
+    }
+
+    $bytes = [System.IO.File]::ReadAllBytes($File)
+    $patched = ConvertTo-DoubleBytes @([double]819, [double]856, [double]1434, [double]1176, [double]1470)
+    Assert-True ((Find-Bytes $bytes $patched) -ge 0) "AutoStocker DLL does not use the left-expanded inventory X offset"
+}
+
 function Validate-13x8 {
     param(
         [hashtable]$Paths,
@@ -488,12 +574,12 @@ function Validate-13x8 {
     foreach ($key in @("RightPanelRect_ExpandedInventory", "PanelClickCatcherRect_ExpandedInventory", "RightHingeRect_ExpandedInventory")) {
         Assert-True $profile.Contains("`"$key`"") "_profilehd.json is missing $key"
     }
-    Assert-True $profile.Contains('"RightPanelRect_ExpandedInventory": { "x": -1140, "y": -856, "width": 1562, "height": 1707 }') "_profilehd.json does not use the original EasternSunLAN expanded panel rect"
-    Assert-True $profile.Contains('"PanelClickCatcherRect_ExpandedInventory": { "x": 0, "y": 0, "width": 1562, "height": 1737 }') "_profilehd.json does not use the original EasternSunLAN click catcher rect"
-    Assert-True $profile.Contains('"RightHingeRect_ExpandedInventory": { "x": 1076, "y": 630 }') "_profilehd.json does not use the original EasternSunLAN expanded hinge rect"
+    Assert-True $profile.Contains('"RightPanelRect_ExpandedInventory": { "x": -1434, "y": -856, "width": 1856, "height": 1707 }') "_profilehd.json does not use the visible 13x8 expanded panel rect"
+    Assert-True $profile.Contains('"PanelClickCatcherRect_ExpandedInventory": { "x": 0, "y": 0, "width": 1456, "height": 1737 }') "_profilehd.json does not use the original-layout 13x8 click catcher rect"
+    Assert-True $profile.Contains('"RightHingeRect_ExpandedInventory": { "x": 1370, "y": 630 }') "_profilehd.json does not use the original-layout 13x8 expanded hinge rect"
 
     $profileLv = Read-Text $Paths.ProfileLv
-    Assert-True $profileLv.Contains('"RightPanelRect_ExpandedInventory": { "x": -1346, "y": 0, "width": 1162, "height": 1737, "scale": 1.16 }') "_profilelv.json does not use the original EasternSunLAN expanded panel rect"
+    Assert-True $profileLv.Contains('"RightPanelRect_ExpandedInventory": { "x": -1689, "y": 0, "width": 1456, "height": 1737, "scale": 1.16 }') "_profilelv.json does not use the visible 13x8 expanded panel rect"
 
     $hd = Read-Text $Paths.HdLayout
     $d2rlan = Read-Text $Paths.D2RLANExpandedTemplate
@@ -503,19 +589,26 @@ function Validate-13x8 {
         $text = $pair[1]
         Assert-True $text.Contains('"rect": "$RightPanelRect_ExpandedInventory"') "$name does not use expanded inventory panel rect"
         Assert-True $text.Contains('"rect": "$PanelClickCatcherRect_ExpandedInventory"') "$name does not use the original EasternSunLAN click catcher rect"
-        Assert-True $text.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2"') "$name does not use the original EasternSunLAN expanded inventory background"
+        Assert-True $text.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"') "$name does not use the manual 13x8 inventory background"
+        Assert-True $text.Contains('"rect": { "x": 1374, "y": 1 }') "$name does not use the original-layout 13x8 close button position"
         Assert-True $text.Contains('"rect": { "x": 93, "y": 819 }') "$name does not use the original EasternSunLAN 13x8 inventory grid position"
         Assert-True $text.Contains('"cellCount": { "x": 13, "y": 8 }') "$name is not 13x8"
-        Assert-True $text.Contains('"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }') "$name does not use the original head slot position"
+        Assert-True $text.Contains('"rect": { "x": 630, "y": 105, "width": 196, "height": 196 }') "$name does not use the centered head slot position"
+        Assert-True $text.Contains('"rect": { "x": 630, "y": 348, "width": 196, "height": 294 }') "$name does not use the centered torso slot position"
+        Assert-True $text.Contains('"rect": { "x": 630, "y": 689, "width": 196, "height": 98 }') "$name does not use the centered belt slot position"
         Assert-True $text.Contains('"rect": { "x": 109, "y": 152, "width": 196, "height": 392 }') "$name does not use the original right weapon slot position"
+        Assert-True $text.Contains('"rect": { "x": 1155, "y": 152, "width": 196, "height": 392 }') "$name does not use the shifted left weapon slot position"
+        Assert-True $text.Contains('"rect": { "x": 1154, "y": 588, "width": 196, "height": 196 }') "$name does not use the shifted feet slot position"
     }
 
     $hdExpansion = Read-Text $Paths.HdExpansionLayout
     $d2rlanExpansion = Read-Text $Paths.D2RLANExpansionTemplate
-    Assert-True $hdExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2"') "HD expansion layout does not use the original EasternSunLAN expanded background"
-    Assert-True $d2rlanExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2"') "D2RLAN expansion template does not use the original EasternSunLAN expanded background"
+    Assert-True $hdExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"') "HD expansion layout does not use the manual 13x8 background"
+    Assert-True $d2rlanExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2_13x8"') "D2RLAN expansion template does not use the manual 13x8 background"
     Assert-True $hdExpansion.Contains('"rect": { "x": 99, "y": 100 }') "HD expansion layout does not use the original weapon swap tab position"
     Assert-True $d2rlanExpansion.Contains('"rect": { "x": 99, "y": 100 }') "D2RLAN expansion template does not use the original weapon swap tab position"
+    Assert-True $hdExpansion.Contains('"rect": { "x": 1144, "y": 100 }') "HD expansion layout does not use the shifted right weapon swap tab position"
+    Assert-True $d2rlanExpansion.Contains('"rect": { "x": 1144, "y": 100 }') "D2RLAN expansion template does not use the shifted right weapon swap tab position"
 
     $legacy = Read-Text $Paths.LegacyLayout
     $controller = Read-Text $Paths.ControllerLayout
@@ -529,6 +622,8 @@ function Validate-13x8 {
 
     foreach ($asset in @(
         "data\hd\global\ui\panel\inventory\background_expanded2.sprite",
+        "data\hd\global\ui\panel\inventory\background_expanded2_13x8.sprite",
+        "data\hd\global\ui\panel\inventory\background_expanded2_13x8.lowend.sprite",
         "data\hd\global\ui\panel\inventory\classic_background_expanded.sprite",
         "data\hd\global\ui\panel\inventory\background_expanded.sprite",
         "data\hd\global\ui\controller\panel\inventorypanel\v2\inventorybg_classic_expanded.sprite",
@@ -550,6 +645,8 @@ function Validate-13x8 {
         }
     }
 
+    Validate-AutoStockerDll $Paths.AutoStockerDll
+
     Write-Host "13x8 inventory validation ok"
 }
 
@@ -567,6 +664,7 @@ if (-not $NoBackup) {
 }
 
 Copy-OverlayAssets $paths
+Write-Step "Using manual 13x8 HD inventory background"
 Patch-InventoryTxt $paths.Inventory
 Patch-ProfileHd $paths.ProfileHd
 Patch-ProfileLv $paths.ProfileLv
@@ -577,6 +675,7 @@ Patch-InventoryExpansionHdArt $paths.D2RLANExpansionTemplate
 Patch-LegacyLayout $paths.LegacyLayout
 Patch-ControllerLayout $paths.ControllerLayout
 Patch-ControllerExpansionLayout $paths.ControllerExpansionLayout
+Patch-AutoStockerDll $paths.AutoStockerDll
 
 if (-not $SkipD2RLANSetting) {
     Patch-UserSettings $paths.UserSettings
