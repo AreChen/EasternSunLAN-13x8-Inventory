@@ -27,6 +27,7 @@ foreach ($item in @("README.md", "CHANGELOG.md", "LICENSE", "NOTICE.md", "plugin
 
 Copy-Item -Path (Join-Path $repoRoot "docs") -Destination (Join-Path $stage "docs") -Recurse -Force
 Copy-Item -Path (Join-Path $repoRoot "tools") -Destination (Join-Path $stage "tools") -Recurse -Force
+Copy-Item -Path (Join-Path $repoRoot "overlay") -Destination (Join-Path $stage "overlay") -Recurse -Force
 
 if (Test-Path $archive) {
     Remove-Item -Path $archive -Force
@@ -36,4 +37,3 @@ Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $archive -Force
 Remove-Item -Path $stage -Recurse -Force
 
 Write-Host $archive
-

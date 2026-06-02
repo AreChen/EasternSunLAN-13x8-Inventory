@@ -15,7 +15,7 @@
 ## 安装
 
 1. 关闭游戏和 D2RLAN 启动器。
-2. 从 GitHub Release 下载 `EasternSunLAN-13x8-Inventory-v3.11.09-13x8.1.zip`。
+2. 从 GitHub Release 下载 `EasternSunLAN-13x8-Inventory-v3.11.09-13x8.2.zip`。
 3. 解压到任意目录，例如：
 
 ```powershell
@@ -80,6 +80,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 - 这个补丁只针对 EasternSunLAN 3.11.09。其它版本或其它 MOD 需要重新检查布局和 `inventory.txt`。
 - 多人联机时，建议所有参与者使用一致的 MOD 数据和启动参数。
 - 手柄布局已经同步为 `13x8`，但仍建议实际进游戏确认光标导航是否符合你的习惯。
+- Release 包包含 13x8 背景 sprite overlay；缺少这些资源时，逻辑可能是 13x8，但画面仍会像 10 列。
 
 ## 修改了哪些文件
 
@@ -88,10 +89,18 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```text
 EasternSunLAN.mpq\data\global\excel\inventory.txt
 EasternSunLAN.mpq\data\global\ui\layouts\_profilehd.json
+EasternSunLAN.mpq\data\global\ui\layouts\_profilelv.json
 EasternSunLAN.mpq\data\global\ui\layouts\playerinventoryoriginallayouthd.json
+EasternSunLAN.mpq\data\global\ui\layouts\playerinventoryexpansionlayouthd.json
 EasternSunLAN.mpq\data\global\ui\layouts\playerinventoryoriginallayout.json
 EasternSunLAN.mpq\data\global\ui\layouts\controller\playerinventoryoriginallayouthd.json
+EasternSunLAN.mpq\data\global\ui\layouts\controller\playerinventoryexpansionlayouthd.json
 EasternSunLAN.mpq\data\D2RLAN\Expanded\Inventory\playerinventoryoriginallayouthd_expanded.json
+EasternSunLAN.mpq\data\D2RLAN\Expanded\Inventory\playerinventoryexpansionlayouthd_expanded.json
+EasternSunLAN.mpq\data\hd\global\ui\panel\inventory\classic_background_expanded.sprite
+EasternSunLAN.mpq\data\hd\global\ui\panel\inventory\background_expanded.sprite
+EasternSunLAN.mpq\data\hd\global\ui\controller\panel\inventorypanel\v2\inventorybg_classic_expanded.sprite
+EasternSunLAN.mpq\data\hd\global\ui\controller\panel\inventorypanel\v2\inventorybg_expanded.sprite
 EasternSunLAN.mpq\MyUserSettings.json
 ```
 
@@ -102,11 +111,11 @@ EasternSunLAN.mpq\MyUserSettings.json
 构建 Release zip：
 
 ```powershell
-.\tools\build-release.ps1 -Version "v3.11.09-13x8.1"
+.\tools\build-release.ps1 -Version "v3.11.09-13x8.2"
 ```
 
 生成文件位于：
 
 ```text
-dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.1.zip
+dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.2.zip
 ```

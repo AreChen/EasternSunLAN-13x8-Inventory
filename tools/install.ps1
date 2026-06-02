@@ -73,6 +73,46 @@ function Replace-IfNeeded {
     return $Text.Replace($Search, $Replacement)
 }
 
+function Replace-AnyIfNeeded {
+    param(
+        [string]$Text,
+        [string[]]$Searches,
+        [string]$Replacement,
+        [string]$File
+    )
+
+    if ($Text.Contains($Replacement)) {
+        return $Text
+    }
+
+    foreach ($search in $Searches) {
+        if ($Text.Contains($search)) {
+            return $Text.Replace($search, $Replacement)
+        }
+    }
+
+    throw "Expected text not found in $File`: $Replacement"
+}
+
+function Set-ObjectLine {
+    param(
+        [string]$Text,
+        [string]$Key,
+        [string]$Value,
+        [string]$AfterLine,
+        [string]$File
+    )
+
+    $line = '    "' + $Key + '": ' + $Value + ','
+    $pattern = '(?m)^\s*"' + [regex]::Escape($Key) + '"\s*:\s*\{[^\r\n]*\},\s*$'
+
+    if ([regex]::IsMatch($Text, $pattern)) {
+        return [regex]::Replace($Text, $pattern, $line, 1)
+    }
+
+    return Replace-IfNeeded $Text $AfterLine ($AfterLine + "`n" + $line) $File
+}
+
 function New-TargetPaths {
     param([string]$Root)
 
@@ -82,10 +122,14 @@ function New-TargetPaths {
         MpqRoot = $mpq
         Inventory = Join-Path $mpq "data\global\excel\inventory.txt"
         ProfileHd = Join-Path $mpq "data\global\ui\layouts\_profilehd.json"
+        ProfileLv = Join-Path $mpq "data\global\ui\layouts\_profilelv.json"
         HdLayout = Join-Path $mpq "data\global\ui\layouts\playerinventoryoriginallayouthd.json"
         LegacyLayout = Join-Path $mpq "data\global\ui\layouts\playerinventoryoriginallayout.json"
         ControllerLayout = Join-Path $mpq "data\global\ui\layouts\controller\playerinventoryoriginallayouthd.json"
         D2RLANExpandedTemplate = Join-Path $mpq "data\D2RLAN\Expanded\Inventory\playerinventoryoriginallayouthd_expanded.json"
+        D2RLANExpansionTemplate = Join-Path $mpq "data\D2RLAN\Expanded\Inventory\playerinventoryexpansionlayouthd_expanded.json"
+        HdExpansionLayout = Join-Path $mpq "data\global\ui\layouts\playerinventoryexpansionlayouthd.json"
+        ControllerExpansionLayout = Join-Path $mpq "data\global\ui\layouts\controller\playerinventoryexpansionlayouthd.json"
         UserSettings = Join-Path $mpq "MyUserSettings.json"
     }
 }
@@ -93,7 +137,7 @@ function New-TargetPaths {
 function Test-RequiredFiles {
     param([hashtable]$Paths)
 
-    foreach ($key in @("Inventory", "ProfileHd", "HdLayout", "LegacyLayout", "ControllerLayout", "D2RLANExpandedTemplate")) {
+    foreach ($key in @("Inventory", "ProfileHd", "ProfileLv", "HdLayout", "LegacyLayout", "ControllerLayout", "D2RLANExpandedTemplate", "D2RLANExpansionTemplate", "HdExpansionLayout", "ControllerExpansionLayout")) {
         if (-not (Test-Path $Paths[$key])) {
             throw "Missing required target file: $($Paths[$key])"
         }
@@ -112,10 +156,14 @@ function Backup-Files {
     $files = @(
         $Paths.Inventory,
         $Paths.ProfileHd,
+        $Paths.ProfileLv,
         $Paths.HdLayout,
         $Paths.LegacyLayout,
         $Paths.ControllerLayout,
-        $Paths.D2RLANExpandedTemplate
+        $Paths.D2RLANExpandedTemplate,
+        $Paths.D2RLANExpansionTemplate,
+        $Paths.HdExpansionLayout,
+        $Paths.ControllerExpansionLayout
     )
 
     if ($IncludeSettings -and (Test-Path $Paths.UserSettings)) {
@@ -134,6 +182,20 @@ function Backup-Files {
     }
 
     Write-Step "Backup created at $backupRoot"
+}
+
+function Copy-OverlayAssets {
+    param([hashtable]$Paths)
+
+    $repoRoot = Resolve-Path -Path (Join-Path $PSScriptRoot "..")
+    $overlayMpq = Join-Path $repoRoot.Path "overlay\EasternSunLAN.mpq"
+
+    if (-not (Test-Path $overlayMpq)) {
+        throw "Overlay assets were not found: $overlayMpq"
+    }
+
+    Copy-Item -Path (Join-Path $overlayMpq "data\hd") -Destination (Join-Path $Paths.MpqRoot "data") -Recurse -Force
+    Write-Step "Copied 13x8 HD inventory art overlay"
 }
 
 function Patch-InventoryTxt {
@@ -195,38 +257,75 @@ function Patch-ProfileHd {
 
     $text = Read-Text $File
 
-    $rightPanelKey = '"RightPanelRect_ExpandedInventory"'
-    if (-not $text.Contains($rightPanelKey)) {
-        $search = '    "RightPanelRectI": { "x": -1140, "y": -856, "width": 1562, "height": 1707 },'
-        $replacement = $search + "`n" + '    "RightPanelRect_ExpandedInventory": { "x": -1140, "y": -856, "width": 1562, "height": 1707 },'
-        $text = Replace-IfNeeded $text $search $replacement $File
-    }
+    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1614, "y": -651, "width": 1382, "height": 1507 }' '    "RightPanelRect": { "x": -1394, "y": -651, "width": 1162, "height": 1507 },' $File
+    $text = Set-ObjectLine $text "PanelClickCatcherRect_ExpandedInventory" '{ "x": 0, "y": 0, "width": 1162, "height": 1507 }' '    "PanelClickCatcherRect": { "x": 0, "y": 0, "width": 1172, "height": 1427 },' $File
+    $text = Set-ObjectLine $text "RightHingeRect" '{ "x": 1096, "y": 630 }' '    "RightSideHoverOffset": { "x": -1086, "y": 0 },' $File
+    $text = Set-ObjectLine $text "RightHingeRect_ExpandedInventory" '{ "x": 1296, "y": 630 }' '    "RightHingeRect": { "x": 1096, "y": 630 },' $File
 
-    $clickCatcherKey = '"PanelClickCatcherRect_ExpandedInventory"'
-    if (-not $text.Contains($clickCatcherKey)) {
-        $search = '    "PanelClickCatcherRect": { "x": 0, "y": 0, "width": 1172, "height": 1427 },'
-        $replacement = $search + "`n" + '    "PanelClickCatcherRect_ExpandedInventory": { "x": 0, "y": 0, "width": 1562, "height": 1737 },'
-        $text = Replace-IfNeeded $text $search $replacement $File
-    }
+    Write-Text $File $text
+}
 
-    $hingeKey = '"RightHingeRect_ExpandedInventory"'
-    if (-not $text.Contains($hingeKey)) {
-        $search = '    "RightHingeRect": { "x": 1076, "y": 630 },'
-        $replacement = $search + "`n" + '    "RightHingeRect_ExpandedInventory": { "x": 1076, "y": 630 },'
-        $text = Replace-IfNeeded $text $search $replacement $File
+function Patch-ProfileLv {
+    param([string]$File)
+
+    $text = Read-Text $File
+    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1601.2, "y": -856, "width": 1382, "height": 1507, "scale": 1.16 }' '    "RightPanelRect":  { "x": -1346, "y": -856, "width": 1162, "height": 1507, "scale": 1.16 },' $File
+    Write-Text $File $text
+}
+
+function Patch-InventoryOriginalHdArt {
+    param([string]$File)
+
+    $text = Read-Text $File
+    $text = Replace-AnyIfNeeded $text @('"rect": "$RightPanelRectI"', '"rect": "$RightPanelRect_ExpandedInventory"') '"rect": "$RightPanelRect_ExpandedInventory"' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": "$RightHingeRect"', '"rect": "$RightHingeRect_ExpandedInventory"') '"rect": "$RightHingeRect_ExpandedInventory"' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 0, "y": 0, "width": 1162, "height": 1737 }', '"rect": "$PanelClickCatcherRect_ExpandedInventory"') '"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }' $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 1080, "y": 1 }', '"rect": { "x": 1300, "y": 1 }') '"rect": { "x": 1300, "y": 1 }' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 93, "y": 819 }', '"rect": { "x": 56, "y": 590 }') '"rect": { "x": 56, "y": 590 }' $File
+    $text = Replace-AnyIfNeeded $text @('"cellCount": { "x": 10, "y": 8 }', '"cellCount": { "x": 13, "y": 8 }') '"cellCount": { "x": 13, "y": 8 }' $File
+
+    $rects = @(
+        @('"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 117, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 718, "y": 273, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 91, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 482, "y": 348, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 119, "width": 196, "height": 294 }'),
+        @('"rect": { "x": 109, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 95, "y": 164, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 861, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 1088, "y": 164, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 344, "y": 690, "width": 98, "height": 98 }', '"rect": { "x": 818, "y": 224, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 718, "y": 689, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 223, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 483, "y": 689, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 455, "width": 196, "height": 98 }'),
+        @('"rect": { "x": 860, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 834, "y": 357, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 107, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 355, "width": 196, "height": 196 }')
+    )
+
+    foreach ($pair in $rects) {
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1]) $pair[1] $File
     }
 
     Write-Text $File $text
 }
 
-function Patch-HdInventoryLayoutFile {
+function Patch-InventoryExpansionHdArt {
     param([string]$File)
 
     $text = Read-Text $File
-    $text = Replace-IfNeeded $text ('"rect": "$RightPanelRectI"') ('"rect": "$RightPanelRect_ExpandedInventory"') $File
-    $text = Replace-IfNeeded $text ('"rect": "$RightHingeRect"') ('"rect": "$RightHingeRect_ExpandedInventory"') $File
-    $text = Replace-IfNeeded $text ('"rect": { "x": 0, "y": 0, "width": 1162, "height": 1737 }') ('"rect": "$PanelClickCatcherRect_ExpandedInventory"') $File
-    $text = Replace-IfNeeded $text ('"cellCount": { "x": 10, "y": 8 }') ('"cellCount": { "x": 13, "y": 8 }') $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded"' $File
+
+    $rects = @(
+        @('"rect": { "x": 99, "y": 100 }', '"rect": { "x": 85, "y": 112 }'),
+        @('"rect": { "x": 850, "y": 100 }', '"rect": { "x": 1077, "y": 112 }'),
+        @('"rect": { "x": 99, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 205, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 191, "y": 112, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 850, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 956, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 112, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 99, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 215, "height": 48 }'),
+        @('"rect": { "x": 850, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 215, "height": 48 }')
+    )
+
+    foreach ($pair in $rects) {
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1]) $pair[1] $File
+    }
+
     Write-Text $File $text
 }
 
@@ -242,6 +341,9 @@ function Patch-ControllerLayout {
     param([string]$File)
 
     $text = Read-Text $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Edit"', '"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Classic_Expanded"') '"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Classic_Expanded"' $File
+    $text = Replace-AnyIfNeeded $text @('"rect":{"x":-508, "y":-700}', '"rect":{"x":-674, "y":-860}') '"rect":{"x":-674, "y":-860}' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 216, "y": 893}', '"rect": { "x": 84, "y": 549}') '"rect": { "x": 84, "y": 549}' $File
 
     if (-not $text.Contains('"cellCount": { "x": 13, "y": 8 }')) {
         $script:ControllerGridInserted = $false
@@ -266,6 +368,50 @@ function Patch-ControllerLayout {
         }
 
         Remove-Variable -Name ControllerGridInserted -Scope Script -ErrorAction SilentlyContinue
+    }
+
+    $rects = @(
+        @('"rect": { "x": 607, "y": 59, "width": 196, "height": 196 }', '"rect": { "x": 368, "y": 80, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 851, "y": 221, "width": 98, "height": 98 }', '"rect": { "x": 848, "y": 54, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 607, "y": 281, "width": 196, "height": 294 }', '"rect": { "x": 613, "y": 82, "width": 196, "height": 294 }'),
+        @('"rect": { "x": 224, "y": 186, "width": 196, "height": 392 }', '"rect": { "x": 125, "y": 126, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 994, "y": 188, "width": 196, "height": 392 }', '"rect": { "x": 1117, "y": 126, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 460, "y": 603, "width": 98, "height": 98 }', '"rect": { "x": 849, "y": 186, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 857, "y": 603, "width": 98, "height": 98}', '"rect": { "x": 983, "y": 186, "width": 98, "height": 98}'),
+        @('"rect": { "x": 606, "y": 601, "width": 196, "height": 98 }', '"rect": { "x": 613, "y": 416, "width": 196, "height": 98 }'),
+        @('"rect": { "x": 994, "y": 601, "width": 196, "height": 196 }', '"rect": { "x": 864, "y": 320, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 224, "y": 603, "width": 196, "height": 196 }', '"rect": { "x": 370, "y": 321, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 452, "y": 750 }', '"rect": { "x": 467, "y": 1345 }'),
+        @('"rect": { "x": 605, "y": 1729, "width": 257, "height": 48 }', '"rect": { "x": 141, "y": 1749, "width": 257, "height": 48 }'),
+        @('"rect": { "x": 551, "y": 1729, "width": 317, "height": 44 }', '"rect": { "x": 87, "y": 1749, "width": 317, "height": 44 }')
+    )
+
+    foreach ($pair in $rects) {
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1]) $pair[1] $File
+    }
+
+    Write-Text $File $text
+}
+
+function Patch-ControllerExpansionLayout {
+    param([string]$File)
+
+    $text = Read-Text $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Edit"', '"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Expanded"') '"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Expanded"' $File
+
+    $rects = @(
+        @('"rect": { "x": 215, "y": 134 }', '"rect": { "x": 116, "y": 74 }'),
+        @('"rect": { "x": 985, "y": 134 }', '"rect": { "x": 1108, "y": 72 }'),
+        @('"rect": { "x": 227, "y": 131, "width": 84, "height": 48 }', '"rect": { "x": 128, "y": 71, "width": 84, "height": 48 }'),
+        @('"rect": { "x": 332, "y": 131, "width": 84, "height": 48 }', '"rect": { "x": 233, "y": 71, "width": 84, "height": 48 }'),
+        @('"rect": { "x": 998, "y": 131, "width": 84, "height": 48 }', '"rect": { "x": 1121, "y": 69, "width": 84, "height": 48 }'),
+        @('"rect": { "x": 1104, "y": 131, "width": 84, "height": 48 }', '"rect": { "x": 1227, "y": 69, "width": 84, "height": 48 }'),
+        @('"rect": { "x": 220, "y": 69, "width": 197, "height": 48 }', '"rect": { "x": 121, "y": 9, "width": 197, "height": 48 }'),
+        @('"rect": { "x": 996, "y": 69, "width": 197, "height": 48 }', '"rect": { "x": 1119, "y": 7, "width": 197, "height": 48 }')
+    )
+
+    foreach ($pair in $rects) {
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1]) $pair[1] $File
     }
 
     Write-Text $File $text
@@ -342,6 +488,11 @@ function Validate-13x8 {
     foreach ($key in @("RightPanelRect_ExpandedInventory", "PanelClickCatcherRect_ExpandedInventory", "RightHingeRect_ExpandedInventory")) {
         Assert-True $profile.Contains("`"$key`"") "_profilehd.json is missing $key"
     }
+    Assert-True $profile.Contains('"RightPanelRect_ExpandedInventory": { "x": -1614, "y": -651, "width": 1382, "height": 1507 }') "_profilehd.json does not use the official 13x8 expanded panel rect"
+    Assert-True $profile.Contains('"RightHingeRect_ExpandedInventory": { "x": 1296, "y": 630 }') "_profilehd.json does not use the official 13x8 expanded hinge rect"
+
+    $profileLv = Read-Text $Paths.ProfileLv
+    Assert-True $profileLv.Contains('"RightPanelRect_ExpandedInventory": { "x": -1601.2, "y": -856, "width": 1382, "height": 1507, "scale": 1.16 }') "_profilelv.json does not use the official 13x8 expanded panel rect"
 
     $hd = Read-Text $Paths.HdLayout
     $d2rlan = Read-Text $Paths.D2RLANExpandedTemplate
@@ -350,14 +501,35 @@ function Validate-13x8 {
         $name = $pair[0]
         $text = $pair[1]
         Assert-True $text.Contains('"rect": "$RightPanelRect_ExpandedInventory"') "$name does not use expanded inventory panel rect"
-        Assert-True $text.Contains('"rect": "$PanelClickCatcherRect_ExpandedInventory"') "$name does not use expanded click catcher rect"
+        Assert-True $text.Contains('"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }') "$name does not use the official 13x8 click catcher rect"
+        Assert-True $text.Contains('"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') "$name does not use the 13x8 classic inventory background"
+        Assert-True $text.Contains('"rect": { "x": 56, "y": 590 }') "$name does not use the official 13x8 inventory grid position"
         Assert-True $text.Contains('"cellCount": { "x": 13, "y": 8 }') "$name is not 13x8"
     }
+
+    $hdExpansion = Read-Text $Paths.HdExpansionLayout
+    $d2rlanExpansion = Read-Text $Paths.D2RLANExpansionTemplate
+    Assert-True $hdExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded"') "HD expansion layout does not use the 13x8 expanded background"
+    Assert-True $d2rlanExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded"') "D2RLAN expansion template does not use the 13x8 expanded background"
 
     $legacy = Read-Text $Paths.LegacyLayout
     $controller = Read-Text $Paths.ControllerLayout
     Assert-True $legacy.Contains('"cellCount": { "x": 13, "y": 8 }') "legacy layout is not 13x8"
     Assert-True $controller.Contains('"cellCount": { "x": 13, "y": 8 }') "controller layout is not 13x8"
+    Assert-True $controller.Contains('"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Classic_Expanded"') "controller layout does not use the 13x8 classic controller background"
+    Assert-True $controller.Contains('"rect": { "x": 84, "y": 549}') "controller layout does not use the official 13x8 grid position"
+
+    $controllerExpansion = Read-Text $Paths.ControllerExpansionLayout
+    Assert-True $controllerExpansion.Contains('"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Expanded"') "controller expansion layout does not use the 13x8 expanded controller background"
+
+    foreach ($asset in @(
+        "data\hd\global\ui\panel\inventory\classic_background_expanded.sprite",
+        "data\hd\global\ui\panel\inventory\background_expanded.sprite",
+        "data\hd\global\ui\controller\panel\inventorypanel\v2\inventorybg_classic_expanded.sprite",
+        "data\hd\global\ui\controller\panel\inventorypanel\v2\inventorybg_expanded.sprite"
+    )) {
+        Assert-True (Test-Path (Join-Path $Paths.MpqRoot $asset)) "Missing 13x8 art asset: $asset"
+    }
 
     $expandedText = $hd + $d2rlan + $legacy + $controller
     Assert-True (-not [regex]::IsMatch($expandedText, '"cellCount"\s*:\s*\{\s*"x"\s*:\s*10\s*,\s*"y"\s*:\s*8\s*\}')) "A 10x8 expanded inventory cellCount remains"
@@ -388,12 +560,17 @@ if (-not $NoBackup) {
     Backup-Files $paths (-not $SkipD2RLANSetting)
 }
 
+Copy-OverlayAssets $paths
 Patch-InventoryTxt $paths.Inventory
 Patch-ProfileHd $paths.ProfileHd
-Patch-HdInventoryLayoutFile $paths.HdLayout
-Patch-HdInventoryLayoutFile $paths.D2RLANExpandedTemplate
+Patch-ProfileLv $paths.ProfileLv
+Patch-InventoryOriginalHdArt $paths.HdLayout
+Patch-InventoryOriginalHdArt $paths.D2RLANExpandedTemplate
+Patch-InventoryExpansionHdArt $paths.HdExpansionLayout
+Patch-InventoryExpansionHdArt $paths.D2RLANExpansionTemplate
 Patch-LegacyLayout $paths.LegacyLayout
 Patch-ControllerLayout $paths.ControllerLayout
+Patch-ControllerExpansionLayout $paths.ControllerExpansionLayout
 
 if (-not $SkipD2RLANSetting) {
     Patch-UserSettings $paths.UserSettings

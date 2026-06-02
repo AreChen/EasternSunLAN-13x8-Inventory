@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.11.09-13x8.2
+
+- Adds the 13x8 HD inventory background sprite overlay from the D2RMM ExpandedInventory source.
+- Reworks HD original, HD weapon-swap, controller original, and controller weapon-swap layouts to use the official 13x8 coordinates.
+- Adds `_profilelv.json` support and stricter validation for panel rects, sprite filenames, and grid positions.
+- Fixes the v3.11.09-13x8.1 issue where `inventory.txt` and `cellCount` were 13x8, but the visible inventory background could still look like 10 columns.
+
 ## v3.11.09-13x8.1
 
 - Added a PowerShell installer for EasternSunLAN 3.11.09.
@@ -7,4 +14,3 @@
 - Updates HD, legacy, controller, and D2RLAN expanded inventory layouts.
 - Preserves user settings while setting `ExpandedInventory=true` when `MyUserSettings.json` exists.
 - Adds validation and uninstall helpers.
-
