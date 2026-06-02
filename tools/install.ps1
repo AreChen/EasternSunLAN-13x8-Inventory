@@ -257,10 +257,10 @@ function Patch-ProfileHd {
 
     $text = Read-Text $File
 
-    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1614, "y": -651, "width": 1382, "height": 1507 }' '    "RightPanelRect": { "x": -1394, "y": -651, "width": 1162, "height": 1507 },' $File
-    $text = Set-ObjectLine $text "PanelClickCatcherRect_ExpandedInventory" '{ "x": 0, "y": 0, "width": 1162, "height": 1507 }' '    "PanelClickCatcherRect": { "x": 0, "y": 0, "width": 1172, "height": 1427 },' $File
-    $text = Set-ObjectLine $text "RightHingeRect" '{ "x": 1096, "y": 630 }' '    "RightSideHoverOffset": { "x": -1086, "y": 0 },' $File
-    $text = Set-ObjectLine $text "RightHingeRect_ExpandedInventory" '{ "x": 1296, "y": 630 }' '    "RightHingeRect": { "x": 1096, "y": 630 },' $File
+    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1140, "y": -856, "width": 1562, "height": 1707 }' '    "RightPanelRectI": { "x": -1140, "y": -856, "width": 1562, "height": 1707 },' $File
+    $text = Set-ObjectLine $text "PanelClickCatcherRect_ExpandedInventory" '{ "x": 0, "y": 0, "width": 1562, "height": 1737 }' '    "PanelClickCatcherRect": { "x": 0, "y": 0, "width": 1172, "height": 1427 },' $File
+    $text = Set-ObjectLine $text "RightHingeRect" '{ "x": 1076, "y": 630 }' '    "RightSideHoverOffset": { "x": -1086, "y": 0 },' $File
+    $text = Set-ObjectLine $text "RightHingeRect_ExpandedInventory" '{ "x": 1076, "y": 630 }' '    "RightHingeRect": { "x": 1076, "y": 630 },' $File
 
     Write-Text $File $text
 }
@@ -269,7 +269,7 @@ function Patch-ProfileLv {
     param([string]$File)
 
     $text = Read-Text $File
-    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1601.2, "y": -856, "width": 1382, "height": 1507, "scale": 1.16 }' '    "RightPanelRect":  { "x": -1346, "y": -856, "width": 1162, "height": 1507, "scale": 1.16 },' $File
+    $text = Set-ObjectLine $text "RightPanelRect_ExpandedInventory" '{ "x": -1346, "y": 0, "width": 1162, "height": 1737, "scale": 1.16 }' '    "RightPanelRect":  { "x": -1346, "y": -856, "width": 1162, "height": 1507, "scale": 1.16 },' $File
     Write-Text $File $text
 }
 
@@ -279,10 +279,10 @@ function Patch-InventoryOriginalHdArt {
     $text = Read-Text $File
     $text = Replace-AnyIfNeeded $text @('"rect": "$RightPanelRectI"', '"rect": "$RightPanelRect_ExpandedInventory"') '"rect": "$RightPanelRect_ExpandedInventory"' $File
     $text = Replace-AnyIfNeeded $text @('"rect": "$RightHingeRect"', '"rect": "$RightHingeRect_ExpandedInventory"') '"rect": "$RightHingeRect_ExpandedInventory"' $File
-    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 0, "y": 0, "width": 1162, "height": 1737 }', '"rect": "$PanelClickCatcherRect_ExpandedInventory"') '"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }' $File
-    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"' $File
-    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 1080, "y": 1 }', '"rect": { "x": 1300, "y": 1 }') '"rect": { "x": 1300, "y": 1 }' $File
-    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 93, "y": 819 }', '"rect": { "x": 56, "y": 590 }', '"rect": { "x": 56, "y": 640 }') '"rect": { "x": 56, "y": 640 }' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 0, "y": 0, "width": 1162, "height": 1737 }', '"rect": "$PanelClickCatcherRect_ExpandedInventory"', '"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }') '"rect": "$PanelClickCatcherRect_ExpandedInventory"' $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded2"' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 1080, "y": 1 }', '"rect": { "x": 1300, "y": 1 }') '"rect": { "x": 1080, "y": 1 }' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 93, "y": 819 }', '"rect": { "x": 56, "y": 590 }', '"rect": { "x": 56, "y": 640 }') '"rect": { "x": 93, "y": 819 }' $File
     $text = Replace-AnyIfNeeded $text @('"cellCount": { "x": 10, "y": 8 }', '"cellCount": { "x": 13, "y": 8 }') '"cellCount": { "x": 13, "y": 8 }' $File
 
     $rects = @(
@@ -299,7 +299,7 @@ function Patch-InventoryOriginalHdArt {
     )
 
     foreach ($pair in $rects) {
-        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[2] $File
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[0] $File
     }
 
     Write-Text $File $text
@@ -309,7 +309,7 @@ function Patch-InventoryExpansionHdArt {
     param([string]$File)
 
     $text = Read-Text $File
-    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded"' $File
+    $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded2"' $File
 
     $rects = @(
         @('"rect": { "x": 99, "y": 100 }', '"rect": { "x": 85, "y": 112 }', '"rect": { "x": 85, "y": 191 }'),
@@ -323,7 +323,7 @@ function Patch-InventoryExpansionHdArt {
     )
 
     foreach ($pair in $rects) {
-        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[2] $File
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[0] $File
     }
 
     Write-Text $File $text
@@ -488,11 +488,12 @@ function Validate-13x8 {
     foreach ($key in @("RightPanelRect_ExpandedInventory", "PanelClickCatcherRect_ExpandedInventory", "RightHingeRect_ExpandedInventory")) {
         Assert-True $profile.Contains("`"$key`"") "_profilehd.json is missing $key"
     }
-    Assert-True $profile.Contains('"RightPanelRect_ExpandedInventory": { "x": -1614, "y": -651, "width": 1382, "height": 1507 }') "_profilehd.json does not use the official 13x8 expanded panel rect"
-    Assert-True $profile.Contains('"RightHingeRect_ExpandedInventory": { "x": 1296, "y": 630 }') "_profilehd.json does not use the official 13x8 expanded hinge rect"
+    Assert-True $profile.Contains('"RightPanelRect_ExpandedInventory": { "x": -1140, "y": -856, "width": 1562, "height": 1707 }') "_profilehd.json does not use the original EasternSunLAN expanded panel rect"
+    Assert-True $profile.Contains('"PanelClickCatcherRect_ExpandedInventory": { "x": 0, "y": 0, "width": 1562, "height": 1737 }') "_profilehd.json does not use the original EasternSunLAN click catcher rect"
+    Assert-True $profile.Contains('"RightHingeRect_ExpandedInventory": { "x": 1076, "y": 630 }') "_profilehd.json does not use the original EasternSunLAN expanded hinge rect"
 
     $profileLv = Read-Text $Paths.ProfileLv
-    Assert-True $profileLv.Contains('"RightPanelRect_ExpandedInventory": { "x": -1601.2, "y": -856, "width": 1382, "height": 1507, "scale": 1.16 }') "_profilelv.json does not use the official 13x8 expanded panel rect"
+    Assert-True $profileLv.Contains('"RightPanelRect_ExpandedInventory": { "x": -1346, "y": 0, "width": 1162, "height": 1737, "scale": 1.16 }') "_profilelv.json does not use the original EasternSunLAN expanded panel rect"
 
     $hd = Read-Text $Paths.HdLayout
     $d2rlan = Read-Text $Paths.D2RLANExpandedTemplate
@@ -501,16 +502,20 @@ function Validate-13x8 {
         $name = $pair[0]
         $text = $pair[1]
         Assert-True $text.Contains('"rect": "$RightPanelRect_ExpandedInventory"') "$name does not use expanded inventory panel rect"
-        Assert-True $text.Contains('"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }') "$name does not use the official 13x8 click catcher rect"
-        Assert-True $text.Contains('"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') "$name does not use the 13x8 classic inventory background"
-        Assert-True $text.Contains('"rect": { "x": 56, "y": 640 }') "$name does not use the roomy 13x8 inventory grid position"
+        Assert-True $text.Contains('"rect": "$PanelClickCatcherRect_ExpandedInventory"') "$name does not use the original EasternSunLAN click catcher rect"
+        Assert-True $text.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2"') "$name does not use the original EasternSunLAN expanded inventory background"
+        Assert-True $text.Contains('"rect": { "x": 93, "y": 819 }') "$name does not use the original EasternSunLAN 13x8 inventory grid position"
         Assert-True $text.Contains('"cellCount": { "x": 13, "y": 8 }') "$name is not 13x8"
+        Assert-True $text.Contains('"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }') "$name does not use the original head slot position"
+        Assert-True $text.Contains('"rect": { "x": 109, "y": 152, "width": 196, "height": 392 }') "$name does not use the original right weapon slot position"
     }
 
     $hdExpansion = Read-Text $Paths.HdExpansionLayout
     $d2rlanExpansion = Read-Text $Paths.D2RLANExpansionTemplate
-    Assert-True $hdExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded"') "HD expansion layout does not use the 13x8 expanded background"
-    Assert-True $d2rlanExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded"') "D2RLAN expansion template does not use the 13x8 expanded background"
+    Assert-True $hdExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2"') "HD expansion layout does not use the original EasternSunLAN expanded background"
+    Assert-True $d2rlanExpansion.Contains('"filename": "PANEL\\Inventory\\Background_Expanded2"') "D2RLAN expansion template does not use the original EasternSunLAN expanded background"
+    Assert-True $hdExpansion.Contains('"rect": { "x": 99, "y": 100 }') "HD expansion layout does not use the original weapon swap tab position"
+    Assert-True $d2rlanExpansion.Contains('"rect": { "x": 99, "y": 100 }') "D2RLAN expansion template does not use the original weapon swap tab position"
 
     $legacy = Read-Text $Paths.LegacyLayout
     $controller = Read-Text $Paths.ControllerLayout
@@ -523,6 +528,7 @@ function Validate-13x8 {
     Assert-True $controllerExpansion.Contains('"filename": "Controller/Panel/InventoryPanel/V2/InventoryBG_Expanded"') "controller expansion layout does not use the 13x8 expanded controller background"
 
     foreach ($asset in @(
+        "data\hd\global\ui\panel\inventory\background_expanded2.sprite",
         "data\hd\global\ui\panel\inventory\classic_background_expanded.sprite",
         "data\hd\global\ui\panel\inventory\background_expanded.sprite",
         "data\hd\global\ui\controller\panel\inventorypanel\v2\inventorybg_classic_expanded.sprite",

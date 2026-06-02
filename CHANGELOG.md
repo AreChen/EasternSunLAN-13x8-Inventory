@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.11.09-13x8.4
+
+- Restores the HD keyboard/mouse inventory to the original EasternSunLAN UI layout.
+- Keeps the inventory at 13x8 while using the original `Background_Expanded2`, original panel rect, original click catcher, original weapon-swap tab positions, and original equipment slot positions.
+- Keeps the broader D2RLAN expanded template coverage from previous releases so the launcher toggle should not revert the active layout to an older template.
+
 ## v3.11.09-13x8.3
 
 - Changes the HD keyboard/mouse inventory to a roomier equipment layout.

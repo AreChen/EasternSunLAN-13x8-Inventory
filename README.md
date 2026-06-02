@@ -1,6 +1,6 @@
 # EasternSunLAN 13x8 Inventory
 
-这是给 `EasternSunLAN 3.11.09` 使用的独立背包扩展补丁。它把玩家背包从 `10x8` 扩展到 `13x8`，并同步 D2RLAN 的 expanded inventory 模板，避免启动器开关把布局覆盖回旧尺寸。
+这是给 `EasternSunLAN 3.11.09` 使用的独立背包扩展补丁。它把玩家背包从 `10x8` 扩展到 `13x8`，并同步 D2RLAN 的 expanded inventory 模板，避免启动器开关把布局覆盖回旧尺寸。HD 键鼠界面保留 EasternSunLAN 原始 UI 布局，只扩大背包网格宽度。
 
 本仓库是脚本式插件包，不重新分发完整 MOD 或游戏资源。你需要先安装好 Diablo II: Resurrected、EasternSunLAN 和 D2RLAN。
 
@@ -15,7 +15,7 @@
 ## 安装
 
 1. 关闭游戏和 D2RLAN 启动器。
-2. 从 GitHub Release 下载 `EasternSunLAN-13x8-Inventory-v3.11.09-13x8.3.zip`。
+2. 从 GitHub Release 下载 `EasternSunLAN-13x8-Inventory-v3.11.09-13x8.4.zip`。
 3. 解压到任意目录，例如：
 
 ```powershell
@@ -80,8 +80,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 - 这个补丁只针对 EasternSunLAN 3.11.09。其它版本或其它 MOD 需要重新检查布局和 `inventory.txt`。
 - 多人联机时，建议所有参与者使用一致的 MOD 数据和启动参数。
 - 手柄布局已经同步为 `13x8`，但仍建议实际进游戏确认光标导航是否符合你的习惯。
-- Release 包包含 13x8 背景 sprite overlay；缺少这些资源时，逻辑可能是 13x8，但画面仍会像 10 列。
-- HD 键鼠布局使用宽松装备区，背包仍是 `13x8`，但格子会比官方紧凑布局略低。
+- HD 键鼠布局使用 EasternSunLAN 原始 UI 坐标，装备区不会采用 D2RMM 官方紧凑布局；如果未来 MOD 更新替换了原始背景资源，需要重新检查格子和物品对齐。
+- Release 包仍包含 13x8 sprite overlay，主要用于手柄布局和兼容旧安装；不要手工删除 overlay 目录，否则手柄布局可能缺资源。
 
 ## 修改了哪些文件
 
@@ -112,11 +112,11 @@ EasternSunLAN.mpq\MyUserSettings.json
 构建 Release zip：
 
 ```powershell
-.\tools\build-release.ps1 -Version "v3.11.09-13x8.3"
+.\tools\build-release.ps1 -Version "v3.11.09-13x8.4"
 ```
 
 生成文件位于：
 
 ```text
-dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.3.zip
+dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.4.zip
 ```
