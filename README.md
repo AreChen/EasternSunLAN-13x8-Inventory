@@ -19,14 +19,14 @@
 3. 解压到任意目录，例如：
 
 ```powershell
-H:\D2RLAN\Tools\EasternSunLAN-13x8-Inventory
+<任意工具目录>\EasternSunLAN-13x8-Inventory
 ```
 
 4. 运行安装脚本，把 `-ModRoot` 指向你的 EasternSunLAN MOD 目录：
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\tools\install.ps1 -ModRoot "H:\D2RLAN\D2R\Mods\EasternSunLAN"
+.\tools\install.ps1 -ModRoot "<D2R>\Mods\EasternSunLAN"
 ```
 
 5. 启动参数必须包含 `-txt`。常见参数类似：
@@ -42,7 +42,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 安装后可以运行：
 
 ```powershell
-.\tools\validate.ps1 -ModRoot "H:\D2RLAN\D2R\Mods\EasternSunLAN"
+.\tools\validate.ps1 -ModRoot "<D2R>\Mods\EasternSunLAN"
 ```
 
 成功时会输出：
@@ -62,13 +62,13 @@ Set-ExecutionPolicy -Scope Process Bypass
 回退到最近一次备份：
 
 ```powershell
-.\tools\uninstall.ps1 -ModRoot "H:\D2RLAN\D2R\Mods\EasternSunLAN"
+.\tools\uninstall.ps1 -ModRoot "<D2R>\Mods\EasternSunLAN"
 ```
 
 也可以指定某个备份目录：
 
 ```powershell
-.\tools\uninstall.ps1 -ModRoot "H:\D2RLAN\D2R\Mods\EasternSunLAN" -BackupDir "H:\D2RLAN\D2R\Mods\EasternSunLAN\.backup\13x8-inventory\20260602-154000"
+.\tools\uninstall.ps1 -ModRoot "<D2R>\Mods\EasternSunLAN" -BackupDir "<D2R>\Mods\EasternSunLAN\.backup\13x8-inventory\20260602-154000"
 ```
 
 ## 风险点
@@ -110,4 +110,3 @@ EasternSunLAN.mpq\MyUserSettings.json
 ```text
 dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.1.zip
 ```
-

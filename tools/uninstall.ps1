@@ -15,7 +15,7 @@ function Resolve-TargetRoot {
             return $cwd
         }
 
-        throw "Pass -ModRoot, for example: .\tools\uninstall.ps1 -ModRoot `"H:\D2RLAN\D2R\Mods\EasternSunLAN`""
+        throw "Pass -ModRoot, for example: .\tools\uninstall.ps1 -ModRoot `"<D2R>\Mods\EasternSunLAN`""
     }
 
     return (Resolve-Path -Path $InputPath -ErrorAction Stop).Path
