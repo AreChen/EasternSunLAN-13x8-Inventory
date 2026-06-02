@@ -1,0 +1,19 @@
+{
+  "name": "EasternSunLAN 13x8 Inventory",
+  "version": "v3.11.09-13x8.1",
+  "targetMod": "EasternSunLAN",
+  "targetModVersion": "3.11.09",
+  "grid": {
+    "x": 13,
+    "y": 8
+  },
+  "requires": [
+    "Diablo II: Resurrected",
+    "EasternSunLAN 3.11.09",
+    "D2RLAN",
+    "-txt launch argument"
+  ],
+  "distribution": "script patcher",
+  "repository": "https://github.com/AreChen/EasternSunLAN-13x8-Inventory"
+}
+

@@ -1,0 +1,5 @@
+dist/
+.backup/
+*.zip
+*.log
+
