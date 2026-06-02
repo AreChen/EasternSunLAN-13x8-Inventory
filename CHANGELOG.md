@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.11.09-13x8.3
+
+- Changes the HD keyboard/mouse inventory to a roomier equipment layout.
+- Keeps the inventory at 13x8, but moves the grid slightly lower and restores more vertical spacing for weapon, armor, gloves, boots, rings, belt, helm, and amulet slots.
+- Moves the HD weapon-swap tab widgets to match the roomier equipment area.
+
 ## v3.11.09-13x8.2
 
 - Adds the 13x8 HD inventory background sprite overlay from the D2RMM ExpandedInventory source.

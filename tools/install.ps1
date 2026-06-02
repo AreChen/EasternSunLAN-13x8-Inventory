@@ -282,24 +282,24 @@ function Patch-InventoryOriginalHdArt {
     $text = Replace-AnyIfNeeded $text @('"rect": { "x": 0, "y": 0, "width": 1162, "height": 1737 }', '"rect": "$PanelClickCatcherRect_ExpandedInventory"') '"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }' $File
     $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') '"filename": "PANEL\\Inventory\\Classic_Background_Expanded"' $File
     $text = Replace-AnyIfNeeded $text @('"rect": { "x": 1080, "y": 1 }', '"rect": { "x": 1300, "y": 1 }') '"rect": { "x": 1300, "y": 1 }' $File
-    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 93, "y": 819 }', '"rect": { "x": 56, "y": 590 }') '"rect": { "x": 56, "y": 590 }' $File
+    $text = Replace-AnyIfNeeded $text @('"rect": { "x": 93, "y": 819 }', '"rect": { "x": 56, "y": 590 }', '"rect": { "x": 56, "y": 640 }') '"rect": { "x": 56, "y": 640 }' $File
     $text = Replace-AnyIfNeeded $text @('"cellCount": { "x": 10, "y": 8 }', '"cellCount": { "x": 13, "y": 8 }') '"cellCount": { "x": 13, "y": 8 }' $File
 
     $rects = @(
-        @('"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 117, "width": 196, "height": 196 }'),
-        @('"rect": { "x": 718, "y": 273, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 91, "width": 98, "height": 98 }'),
-        @('"rect": { "x": 482, "y": 348, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 119, "width": 196, "height": 294 }'),
-        @('"rect": { "x": 109, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 95, "y": 164, "width": 196, "height": 392 }'),
-        @('"rect": { "x": 861, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 1088, "y": 164, "width": 196, "height": 392 }'),
-        @('"rect": { "x": 344, "y": 690, "width": 98, "height": 98 }', '"rect": { "x": 818, "y": 224, "width": 98, "height": 98 }'),
-        @('"rect": { "x": 718, "y": 689, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 223, "width": 98, "height": 98 }'),
-        @('"rect": { "x": 483, "y": 689, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 455, "width": 196, "height": 98 }'),
-        @('"rect": { "x": 860, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 834, "y": 357, "width": 196, "height": 196 }'),
-        @('"rect": { "x": 107, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 355, "width": 196, "height": 196 }')
+        @('"rect": { "x": 482, "y": 105, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 117, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 169, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 718, "y": 273, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 91, "width": 98, "height": 98 }', '"rect": { "x": 817, "y": 143, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 482, "y": 348, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 119, "width": 196, "height": 294 }', '"rect": { "x": 583, "y": 171, "width": 196, "height": 294 }'),
+        @('"rect": { "x": 109, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 95, "y": 164, "width": 196, "height": 392 }', '"rect": { "x": 94, "y": 216, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 861, "y": 152, "width": 196, "height": 392 }', '"rect": { "x": 1088, "y": 164, "width": 196, "height": 392 }', '"rect": { "x": 1087, "y": 216, "width": 196, "height": 392 }'),
+        @('"rect": { "x": 344, "y": 690, "width": 98, "height": 98 }', '"rect": { "x": 818, "y": 224, "width": 98, "height": 98 }', '"rect": { "x": 818, "y": 276, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 718, "y": 689, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 223, "width": 98, "height": 98 }', '"rect": { "x": 950, "y": 276, "width": 98, "height": 98 }'),
+        @('"rect": { "x": 483, "y": 689, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 455, "width": 196, "height": 98 }', '"rect": { "x": 584, "y": 507, "width": 196, "height": 98 }'),
+        @('"rect": { "x": 860, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 834, "y": 357, "width": 196, "height": 196 }', '"rect": { "x": 833, "y": 413, "width": 196, "height": 196 }'),
+        @('"rect": { "x": 107, "y": 588, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 355, "width": 196, "height": 196 }', '"rect": { "x": 338, "y": 411, "width": 196, "height": 196 }')
     )
 
     foreach ($pair in $rects) {
-        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1]) $pair[1] $File
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[2] $File
     }
 
     Write-Text $File $text
@@ -312,18 +312,18 @@ function Patch-InventoryExpansionHdArt {
     $text = Replace-AnyIfNeeded $text @('"filename": "PANEL\\Inventory\\Background_Expanded2"', '"filename": "PANEL\\Inventory\\Background_Expanded"') '"filename": "PANEL\\Inventory\\Background_Expanded"' $File
 
     $rects = @(
-        @('"rect": { "x": 99, "y": 100 }', '"rect": { "x": 85, "y": 112 }'),
-        @('"rect": { "x": 850, "y": 100 }', '"rect": { "x": 1077, "y": 112 }'),
-        @('"rect": { "x": 99, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 107, "height": 48 }'),
-        @('"rect": { "x": 205, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 191, "y": 112, "width": 107, "height": 48 }'),
-        @('"rect": { "x": 850, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 107, "height": 48 }'),
-        @('"rect": { "x": 956, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 112, "width": 107, "height": 48 }'),
-        @('"rect": { "x": 99, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 215, "height": 48 }'),
-        @('"rect": { "x": 850, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 215, "height": 48 }')
+        @('"rect": { "x": 99, "y": 100 }', '"rect": { "x": 85, "y": 112 }', '"rect": { "x": 85, "y": 191 }'),
+        @('"rect": { "x": 850, "y": 100 }', '"rect": { "x": 1077, "y": 112 }', '"rect": { "x": 1077, "y": 191 }'),
+        @('"rect": { "x": 99, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 85, "y": 192, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 205, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 191, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 191, "y": 192, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 850, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 1077, "y": 192, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 956, "y": 100, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 112, "width": 107, "height": 48 }', '"rect": { "x": 1183, "y": 192, "width": 107, "height": 48 }'),
+        @('"rect": { "x": 99, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 85, "y": 112, "width": 215, "height": 48 }', '"rect": { "x": 85, "y": 191, "width": 215, "height": 48 }'),
+        @('"rect": { "x": 850, "y": 100, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 112, "width": 215, "height": 48 }', '"rect": { "x": 1077, "y": 191, "width": 215, "height": 48 }')
     )
 
     foreach ($pair in $rects) {
-        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1]) $pair[1] $File
+        $text = Replace-AnyIfNeeded $text @($pair[0], $pair[1], $pair[2]) $pair[2] $File
     }
 
     Write-Text $File $text
@@ -503,7 +503,7 @@ function Validate-13x8 {
         Assert-True $text.Contains('"rect": "$RightPanelRect_ExpandedInventory"') "$name does not use expanded inventory panel rect"
         Assert-True $text.Contains('"rect": { "x": 0, "y": 45, "width": 1093, "height": 1495 }') "$name does not use the official 13x8 click catcher rect"
         Assert-True $text.Contains('"filename": "PANEL\\Inventory\\Classic_Background_Expanded"') "$name does not use the 13x8 classic inventory background"
-        Assert-True $text.Contains('"rect": { "x": 56, "y": 590 }') "$name does not use the official 13x8 inventory grid position"
+        Assert-True $text.Contains('"rect": { "x": 56, "y": 640 }') "$name does not use the roomy 13x8 inventory grid position"
         Assert-True $text.Contains('"cellCount": { "x": 13, "y": 8 }') "$name is not 13x8"
     }
 

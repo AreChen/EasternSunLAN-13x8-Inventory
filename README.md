@@ -15,7 +15,7 @@
 ## 安装
 
 1. 关闭游戏和 D2RLAN 启动器。
-2. 从 GitHub Release 下载 `EasternSunLAN-13x8-Inventory-v3.11.09-13x8.2.zip`。
+2. 从 GitHub Release 下载 `EasternSunLAN-13x8-Inventory-v3.11.09-13x8.3.zip`。
 3. 解压到任意目录，例如：
 
 ```powershell
@@ -81,6 +81,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 - 多人联机时，建议所有参与者使用一致的 MOD 数据和启动参数。
 - 手柄布局已经同步为 `13x8`，但仍建议实际进游戏确认光标导航是否符合你的习惯。
 - Release 包包含 13x8 背景 sprite overlay；缺少这些资源时，逻辑可能是 13x8，但画面仍会像 10 列。
+- HD 键鼠布局使用宽松装备区，背包仍是 `13x8`，但格子会比官方紧凑布局略低。
 
 ## 修改了哪些文件
 
@@ -111,11 +112,11 @@ EasternSunLAN.mpq\MyUserSettings.json
 构建 Release zip：
 
 ```powershell
-.\tools\build-release.ps1 -Version "v3.11.09-13x8.2"
+.\tools\build-release.ps1 -Version "v3.11.09-13x8.3"
 ```
 
 生成文件位于：
 
 ```text
-dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.2.zip
+dist\EasternSunLAN-13x8-Inventory-v3.11.09-13x8.3.zip
 ```
